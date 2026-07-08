@@ -33,15 +33,6 @@ npm run dev                 # http://localhost:5173
 - **Password storage:** Argon2id via `Bun.password` (memory-hard, not a fast general-purpose hash) \u2014 see `backend/src/lib/auth.ts`.
 - **Access tokens:** short-lived JWTs (15 min default), verified AND cross-checked against a live Session/User record on every request \u2014 so revocation and deactivation take effect immediately, not just when the JWT happens to expire.
 - **Refresh tokens:** opaque random strings, not JWTs. Only a SHA-256 hash is stored server-side, delivered via an `httpOnly`, `SameSite=Lax`, path-scoped cookie. A DB leak alone can never be replayed as a valid refresh token.
-- **Refresh token rotation + reuse detection:** every refresh issues a new token and marks the old one consumed. If a consumed token is ever presented again, that's treated as a theft signal and **every session for that user is revoked**.
-- **CSRF:** double-submit cookie pattern on `/auth/refresh` and `/auth/logout` (the only cookie-authenticated endpoints) \u2014 a non-httpOnly `csrf_token` cookie must match an `X-CSRF-Token` header the frontend sets explicitly.
-- **Brute-force protection:** account lockout after N failed logins (configurable), with a generic "invalid credentials" error that never reveals whether the email or password was wrong.
-- **RBAC:** `USER` / `ADMIN` roles gate admin content/user management routes.
-- **Plan-based authorization:** subscription tier is checked against the **live** expiry date on every gated request, not cached in the token \u2014 access is cut the instant a plan lapses.
-- **Input validation:** every route body/query is validated with TypeBox schemas at the boundary; malformed/oversized/wrong-typed input is rejected before handler logic runs.
-- **NoSQL-injection-safe search:** uses Mongo's `$text` index rather than building regex from user input (which would also open a ReDoS vector).
-- **Security headers:** CSP-adjacent headers (`X-Frame-Options`, `X-Content-Type-Options`, HSTS in prod, etc.) applied globally.
-- **Consistent error shape:** a single `onError` handler maps everything to `{ error: { code, message } }` \u2014 stack traces and raw DB errors never reach the client.
 
 ## Edge cases explicitly handled
 
